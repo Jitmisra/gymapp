@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "gymappp.app"
-               BlueprintName = "gymappp"
-               ReferencedContainer = "container:gymappp.xcodeproj">
+               BuildableName = "tempoapp.app"
+               BlueprintName = "tempoapp"
+               ReferencedContainer = "container:tempoapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "gymapppTests.xctest"
-               BlueprintName = "gymapppTests"
-               ReferencedContainer = "container:gymappp.xcodeproj">
+               BuildableName = "tempoappTests.xctest"
+               BlueprintName = "tempoappTests"
+               ReferencedContainer = "container:tempoapp.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "gymappp.app"
-            BlueprintName = "gymappp"
-            ReferencedContainer = "container:gymappp.xcodeproj">
+            BuildableName = "tempoapp.app"
+            BlueprintName = "tempoapp"
+            ReferencedContainer = "container:tempoapp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "gymappp.app"
-            BlueprintName = "gymappp"
-            ReferencedContainer = "container:gymappp.xcodeproj">
+            BuildableName = "tempoapp.app"
+            BlueprintName = "tempoapp"
+            ReferencedContainer = "container:tempoapp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

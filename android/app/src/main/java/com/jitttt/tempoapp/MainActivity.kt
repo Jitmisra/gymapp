@@ -1,4 +1,4 @@
-package com.gymappp
+package com.jitttt.tempoapp
 
 import android.os.Build
 import android.os.Bundle

@@ -1,7 +1,52 @@
 {
   "expo": {
-    "name": "gymappp",
-    "slug": "gymappp",
-    "version": "1.0.0"
+    "name": "fittler",
+    "slug": "fittler",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/gym.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./src/assets/gym.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "This app requires access to your health data to track your fitness progress and display step counts.",
+        "NSHealthUpdateUsageDescription": "This app requires permission to update your health data for accurate fitness tracking."
+      },
+      "bundleIdentifier": "com.jitttt.tempoapp"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/gym.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "com.google.android.gms.permission.ACTIVITY_RECOGNITION"
+      ],
+      "package": "com.jitttt.tempoapp"
+    },
+    "web": {
+      "favicon": "./src/assets/gym.png"
+    },
+    "newArchEnabled": true,
+    "owner": "jitttt",
+    "extra": {
+      "eas": {
+        "projectId": "673a22db-d7ea-4b3f-97ec-42b5f1a1c4b0"
+      }
+    },
+    "runtimeVersion": "1.0.0"
   }
 }

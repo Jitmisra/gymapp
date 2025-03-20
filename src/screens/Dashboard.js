@@ -23,12 +23,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const ActivityTile = ({ title, value, unit, icon, color }) => {
   return (
-    <TouchableOpacity style={{ backgroundColor: color, padding: 16, borderRadius: 8 }}>
-      <View style={{ alignItems: 'center' }}>
+    <TouchableOpacity style={[styles.tile, { backgroundColor: color }]}>
+      <View style={styles.tileContent}>
         <MaterialCommunityIcons name={icon} size={28} color="#fff" />
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff' }}>{title}</Text>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#fff' }}>{value}</Text>
-        <Text style={{ fontSize: 14, color: '#fff' }}>{unit}</Text>
+        <Text style={styles.tileTitle}>{title}</Text>
+        <Text style={styles.tileValue}>{value}</Text>
+        <Text style={styles.tileUnit}>{unit}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -159,11 +159,11 @@ const Dashboard = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={styles.container}>
       {/* User Profile Header */}
-      <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 10, alignItems: 'center' }}>
+      <View style={styles.profileHeader}>
         <View>
-          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>
+          <Text style={styles.welcomeText}>
             Hello, {userData ? userData.name.split(' ')[0] : 'there'}!
           </Text>
           <Text style={styles.dateText}>
@@ -181,11 +181,11 @@ const Dashboard = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Health Summary Card - Updated with real data */}
         <View style={styles.summaryContainer}>
-          <View style={{ marginHorizontal: 16, padding: 16, backgroundColor: '#f7f7f7', borderRadius: 10 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 18, fontWeight: '600' }}>Today's Progress</Text>
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryHeaderRow}>
+              <Text style={styles.summaryTitle}>Today's Progress</Text>
               <TouchableOpacity 
-                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 8, borderRadius: 5 }}
+                style={styles.syncButton}
                 onPress={handleSyncHealthData}
                 disabled={isSyncingHealth}
               >
@@ -484,15 +484,18 @@ const Dashboard = ({ navigation }) => {
 
       {/* FIXED Floating AI Assistant Button */}
       <Animated.View
-        style={{
-          position: 'absolute',
-          bottom: 20,
-          right: 20,
-          transform: [{ scale: aiButtonScale }, { rotate: spin }]
-        }}
+        style={[
+          styles.floatingAiButton,
+          {
+            transform: [
+              { scale: aiButtonScale },
+              { rotate: spin }
+            ],
+          },
+        ]}
       >
         <TouchableOpacity 
-          style={{ borderRadius: 30, overflow: 'hidden' }}
+          style={styles.floatingAiButtonTouchable}
           activeOpacity={0.8}
           onPress={() => {
             animateAiButton();
@@ -501,7 +504,7 @@ const Dashboard = ({ navigation }) => {
         >
           <LinearGradient
             colors={['#4A6FFF', '#6B66FF']}
-            style={{ padding: 14, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}
+            style={styles.floatingAiButtonInner}
           >
             <MaterialCommunityIcons name="robot" size={28} color="#fff" />
           </LinearGradient>

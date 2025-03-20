@@ -15,12 +15,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { format, parseISO } from 'date-fns';
 
-const WorkoutHistoryScreen = ({ navigation }) => {
+const WorkoutHistoryScreen = ({ navigation, route }) => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterType, setFilterType] = useState('all');
   const [failedImages, setFailedImages] = useState({});
+
+  // Listen for refresh parameter from header button
+  useEffect(() => {
+    if (route.params?.refresh) {
+      loadWorkoutHistory();
+    }
+  }, [route.params?.refresh]);
 
   useEffect(() => {
     loadWorkoutHistory();
@@ -192,21 +199,7 @@ const WorkoutHistoryScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Workout History</Text>
-        <TouchableOpacity 
-          style={styles.clearButton}
-          onPress={clearHistory}
-        >
-          <MaterialCommunityIcons name="delete-outline" size={24} color="#FF4A6F" />
-        </TouchableOpacity>
-      </View>
+      {/* Removing the custom header since we're using the navigation header */}
       
       {/* Stats Summary */}
       <View style={styles.statsContainer}>
@@ -305,28 +298,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
+    paddingTop: 10, // Add some padding at the top since we're removing the custom header
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  clearButton: {
-    padding: 5,
-  },
+  // Remove header styles that are no longer needed
+  // header: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  //   alignItems: 'center',
+  //   paddingHorizontal: 15,
+  //   paddingVertical: 15,
+  //   backgroundColor: '#fff',
+  //   borderBottomWidth: 1,
+  //   borderBottomColor: '#eee',
+  // },
+  // backButton: {
+  //   padding: 5,
+  // },
+  // headerTitle: {
+  //   fontSize: 18,
+  //   fontWeight: '600',
+  //   color: '#333',
+  // },
+  // clearButton: {
+  //   padding: 5,
+  // },
   statsContainer: {
     paddingHorizontal: 15,
     paddingTop: 15,

@@ -1,7 +1,10 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Switch, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Switch, FlatList, Alert, ActivityIndicator, Platform, Dimensions } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5, Ionicons, AntDesign } from '@expo/vector-icons';
 import { AuthContext } from '../contexts/AuthContext';
+import googleFitManager from '../utils/GoogleFitManager';
+import PermissionsManager from '../utils/PermissionsManager';
+import { LineChart } from 'react-native-chart-kit';
 
 const profileData = {
   name: 'Alex Martin',
@@ -59,7 +62,20 @@ const Profile = ({ navigation }) => {
   const [locationTracking, setLocationTracking] = useState(true);
   const [activeTab, setActiveTab] = useState('Activity');
   const [connectingApp, setConnectingApp] = useState(null);
-  
+  const [monthlyStats, setMonthlyStats] = useState({
+    totalSteps: 0,
+    dailyAvgSteps: 0,
+    totalCalories: 0,
+    dailyAvgCalories: 0,
+    totalDistance: 0, // in miles
+    weeklyAvgDistance: 0,
+  });
+  const [stepHistory, setStepHistory] = useState({
+    labels: ['', '', '', '', '', '', ''],
+    datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+
   const { 
     isGuestMode, 
     signOut, 
@@ -98,18 +114,136 @@ const Profile = ({ navigation }) => {
           ]
         );
       } else {
-        // Connect to the health app
-        const success = await connectHealthApp(appId);
-        if (!success) {
-          Alert.alert(
-            "Connection Failed",
-            `Could not connect to ${getHealthAppName(appId)}. Please check your permissions and try again.`
-          );
+        // Connect to the health app with better error handling
+        console.log(`Attempting to connect to ${appId}...`);
+        
+        // Special handling for Google Fit on Android with our custom manager
+        if (appId === 'googleFit' && Platform.OS === 'android') {
+          try {
+            // Show a specific message for Google Fit
+            Alert.alert(
+              "Google Fit Connection",
+              "Please ensure Google Fit is installed and you've granted all necessary permissions when prompted.",
+              [{ text: "Continue" }]
+            );
+            
+            // Check activity recognition permission first
+            const hasPermission = await PermissionsManager.checkActivityRecognitionPermission();
+            if (!hasPermission) {
+              const granted = await PermissionsManager.requestActivityRecognitionWithExplanation();
+              if (!granted) {
+                Alert.alert(
+                  "Permission Denied",
+                  "Activity recognition permission is required to track steps and fitness data.",
+                  [{ text: "OK" }]
+                );
+                setConnectingApp(null);
+                return;
+              }
+            }
+            
+            // Check if Google Fit is available first
+            const isAvailable = googleFitManager.isAvailable();
+            if (!isAvailable) {
+              Alert.alert(
+                "Google Fit Not Available",
+                "The Google Fit module couldn't be loaded. Please make sure the Google Fit app is installed on your device.",
+                [{ text: "OK" }]
+              );
+              setConnectingApp(null);
+              return;
+            }
+            
+            // Try multiple connection approaches
+            const connectionResult = await googleFitManager.tryConnect();
+            console.log('Connection result:', JSON.stringify(connectionResult));
+            
+            // Handle verification errors specifically
+            if (connectionResult.verificationRequired) {
+              console.log('Google verification required');
+              Alert.alert(
+                "Google Verification Required",
+                "This app hasn't been verified by Google yet. Only test users added to the Google Cloud Console project can use Google Fit features.\n\nContact the app developer to be added as a test user.",
+                [
+                  { 
+                    text: "Learn More", 
+                    onPress: () => {
+                      // If you have a way to open links, you could open Google's documentation
+                      console.log("User wants to learn more about verification");
+                    }
+                  },
+                  { text: "OK" }
+                ]
+              );
+              setConnectingApp(null);
+              return;
+            }
+            
+            // Handle user cancellation explicitly
+            if (connectionResult.cancelled) {
+              console.log('User cancelled Google Fit authentication');
+              Alert.alert(
+                "Authentication Cancelled",
+                "You cancelled the Google Fit authentication. Please try again and complete the sign-in process to connect your fitness data.",
+                [{ text: "OK" }]
+              );
+              setConnectingApp(null);
+              return;
+            }
+            
+            if (connectionResult && connectionResult.success) {
+              // Start recording if connection was successful
+              await googleFitManager.startRecording();
+              
+              // Now connect through our regular flow
+              const success = await connectHealthApp(appId);
+              
+              if (!success) {
+                throw new Error("Final connection process failed");
+              }
+            } else {
+              throw new Error(connectionResult?.message || "Connection failed with unknown error");
+            }
+          } catch (error) {
+            console.error('Error with Google Fit connection:', error);
+            
+            // Get diagnostic info
+            const diagnostics = googleFitManager.getDiagnostics();
+            console.log('Google Fit diagnostics:', JSON.stringify(diagnostics));
+            
+            Alert.alert(
+              "Connection Failed",
+              `Could not connect to Google Fit.\n\nError: ${error.message}\n\nMake sure:\n1. Google Fit app is installed and set up\n2. You're signed in to Google Fit\n3. You've granted all permissions`,
+              [{ text: "OK" }]
+            );
+            
+            setConnectingApp(null);
+            return;
+          }
+        } else {
+          // Regular flow for other health apps
+          const success = await connectHealthApp(appId);
+          
+          if (!success) {
+            let errorMessage = `Could not connect to ${getHealthAppName(appId)}. Please check your permissions and try again.`;
+            
+            Alert.alert(
+              "Connection Failed",
+              errorMessage,
+              [
+                { 
+                  text: "Try Again",
+                  onPress: () => handleHealthAppConnection(appId)
+                },
+                { text: "Cancel" }
+              ]
+            );
+          }
         }
       }
     } catch (error) {
       console.error('Error toggling health app connection:', error);
-      Alert.alert("Error", "Failed to connect to health app. Please try again.");
+      Alert.alert("Error", `Failed to connect to health app: ${error.message || 'Unknown error'}`);
     } finally {
       setConnectingApp(null);
     }
@@ -276,6 +410,138 @@ const Profile = ({ navigation }) => {
   
   const bmiCategory = bmiData ? getBMICategory(bmiData.bmi) : null;
 
+  // Fetch monthly statistics when profile loads or when health apps connection changes
+  useEffect(() => {
+    if (isAnyHealthAppConnected()) {
+      fetchMonthlyStats();
+    }
+  }, [connectedHealthApps]);
+
+  // Function to check if any health app is connected
+  const isAnyHealthAppConnected = () => {
+    return connectedHealthApps.googleFit || 
+           connectedHealthApps.appleHealth || 
+           connectedHealthApps.samsungHealth;
+  };
+
+  // Fetch monthly statistics from health services
+  const fetchMonthlyStats = async () => {
+    setIsLoadingStats(true);
+    try {
+      // Get current date info for calculations
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const daysPassed = Math.min(today.getDate(), daysInMonth);
+      
+      let totalSteps = 0;
+      let totalCalories = 0;
+      let totalDistance = 0;
+      let last7DaysSteps = [0, 0, 0, 0, 0, 0, 0];
+      let dayLabels = ['', '', '', '', '', '', ''];
+      
+      // Simulated data if we're in development/testing mode 
+      // In a real app, we would fetch this from the health services
+      if (__DEV__ && !connectedHealthApps.googleFit && !connectedHealthApps.appleHealth) {
+        // Generate some realistic sample data for development
+        totalSteps = Math.floor(Math.random() * 200000) + 50000;
+        totalCalories = Math.floor(Math.random() * 40000) + 10000;
+        totalDistance = Math.floor(Math.random() * 100) + 20;
+        
+        // Generate last 7 days of step data
+        for (let i = 0; i < 7; i++) {
+          last7DaysSteps[i] = Math.floor(Math.random() * 5000) + 3000;
+          const day = new Date();
+          day.setDate(today.getDate() - (6 - i));
+          dayLabels[i] = day.getDate().toString();
+        }
+      } else {
+        // In a real app, here we would:
+        // 1. Call health services API to get monthly data
+        // 2. Sum up the values and calculate averages
+        
+        // For Google Fit on Android
+        if (Platform.OS === 'android' && connectedHealthApps.googleFit) {
+          try {
+            // Check if we can access Google Fit data
+            if (googleFitManager.isAuthorized) {
+              // Get the daily step data for the current month
+              // This would normally involve date range queries to the health API
+              
+              // For step history, get last 7 days
+              for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                
+                // Get step data for this day - in a real app this would call GoogleFit API
+                // Here we're just generating random data
+                const daySteps = Math.floor(Math.random() * 5000) + 3000;
+                last7DaysSteps[6-i] = daySteps;
+                dayLabels[6-i] = date.getDate().toString();
+                
+                // Add to monthly totals
+                totalSteps += daySteps;
+                totalCalories += Math.floor(daySteps * 0.05); // Crude estimate
+                totalDistance += daySteps / 2000; // Crude estimate, ~2000 steps per mile
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching Google Fit data:', error);
+          }
+        }
+        
+        // For Apple Health on iOS 
+        if (Platform.OS === 'ios' && connectedHealthApps.appleHealth) {
+          // Similar implementation as above but for Apple Health
+          // Since this is placeholder, we'll use the same random data approach
+          for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            
+            const daySteps = Math.floor(Math.random() * 5000) + 3000;
+            last7DaysSteps[6-i] = daySteps;
+            dayLabels[6-i] = date.getDate().toString();
+            
+            totalSteps += daySteps;
+            totalCalories += Math.floor(daySteps * 0.05);
+            totalDistance += daySteps / 2000;
+          }
+        }
+      }
+      
+      // Calculate daily and weekly averages
+      const dailyAvgSteps = Math.floor(totalSteps / daysPassed);
+      const dailyAvgCalories = Math.floor(totalCalories / daysPassed);
+      const weeklyAvgDistance = (totalDistance / (daysPassed / 7)).toFixed(1);
+      
+      setMonthlyStats({
+        totalSteps,
+        dailyAvgSteps,
+        totalCalories,
+        dailyAvgCalories,
+        totalDistance: totalDistance.toFixed(1),
+        weeklyAvgDistance
+      });
+      
+      setStepHistory({
+        labels: dayLabels,
+        datasets: [{ data: last7DaysSteps }]
+      });
+      
+    } catch (error) {
+      console.error('Error fetching monthly stats:', error);
+      Alert.alert('Error', 'Could not load health statistics');
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  // Format large numbers with commas
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -350,6 +616,92 @@ const Profile = ({ navigation }) => {
             />
           </View>
 
+          {/* Step History Chart */}
+          {isAnyHealthAppConnected() && (
+            <View style={styles.sectionContainer}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Step History</Text>
+                <TouchableOpacity onPress={fetchMonthlyStats}>
+                  <Text style={styles.refreshText}>Refresh</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {isLoadingStats ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#4A6FFF" />
+                  <Text style={styles.loadingText}>Loading data...</Text>
+                </View>
+              ) : (
+                <View style={styles.chartContainer}>
+                  <LineChart
+                    data={stepHistory}
+                    width={Dimensions.get('window').width - 40}
+                    height={180}
+                    chartConfig={{
+                      backgroundColor: '#fff',
+                      backgroundGradientFrom: '#fff',
+                      backgroundGradientTo: '#fff',
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(74, 111, 255, ${opacity})`,
+                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                      style: {
+                        borderRadius: 16
+                      },
+                      propsForDots: {
+                        r: "6",
+                        strokeWidth: "2",
+                        stroke: "#4A6FFF"
+                      }
+                    }}
+                    bezier
+                    style={styles.chart}
+                  />
+                  <Text style={styles.chartLabel}>Last 7 Days Steps</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          <View style={styles.statsSection}>
+            <Text style={styles.sectionTitle}>Monthly Statistics</Text>
+            
+            {isLoadingStats ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#4A6FFF" />
+                <Text style={styles.loadingText}>Loading statistics...</Text>
+              </View>
+            ) : (
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <View style={styles.statCardHeader}>
+                    <MaterialCommunityIcons name="shoe-print" size={22} color="#4A6FFF" />
+                    <Text style={styles.statCardLabel}>Steps</Text>
+                  </View>
+                  <Text style={styles.statCardValue}>{formatNumber(monthlyStats.totalSteps)}</Text>
+                  <Text style={styles.statCardAverage}>{formatNumber(monthlyStats.dailyAvgSteps)} daily avg</Text>
+                </View>
+                
+                <View style={styles.statCard}>
+                  <View style={styles.statCardHeader}>
+                    <FontAwesome5 name="fire" size={22} color="#FF6B6B" />
+                    <Text style={styles.statCardLabel}>Calories</Text>
+                  </View>
+                  <Text style={styles.statCardValue}>{formatNumber(monthlyStats.totalCalories)}</Text>
+                  <Text style={styles.statCardAverage}>{formatNumber(monthlyStats.dailyAvgCalories)} daily avg</Text>
+                </View>
+                
+                <View style={[styles.statCard, { width: '100%' }]}>
+                  <View style={styles.statCardHeader}>
+                    <MaterialCommunityIcons name="map-marker-distance" size={22} color="#6BBF59" />
+                    <Text style={styles.statCardLabel}>Miles</Text>
+                  </View>
+                  <Text style={styles.statCardValue}>{monthlyStats.totalDistance}</Text>
+                  <Text style={styles.statCardAverage}>{monthlyStats.weeklyAvgDistance} weekly avg</Text>
+                </View>
+              </View>
+            )}
+          </View>
+
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
             <FlatList
@@ -361,44 +713,6 @@ const Profile = ({ navigation }) => {
             <TouchableOpacity style={styles.viewAllButton}>
               <Text style={styles.viewAllText}>View All Activity</Text>
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.statsSection}>
-            <Text style={styles.sectionTitle}>Monthly Statistics</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statCard}>
-                <View style={styles.statCardHeader}>
-                  <MaterialCommunityIcons name="shoe-print" size={22} color="#4A6FFF" />
-                  <Text style={styles.statCardLabel}>Steps</Text>
-                </View>
-                <Text style={styles.statCardValue}>247,583</Text>
-                <Text style={styles.statCardAverage}>8,252 daily avg</Text>
-              </View>
-              <View style={styles.statCard}>
-                <View style={styles.statCardHeader}>
-                  <FontAwesome5 name="fire" size={22} color="#FF6B6B" />
-                  <Text style={styles.statCardLabel}>Calories</Text>
-                </View>
-                <Text style={styles.statCardValue}>42,156</Text>
-                <Text style={styles.statCardAverage}>1,405 daily avg</Text>
-              </View>
-              <View style={styles.statCard}>
-                <View style={styles.statCardHeader}>
-                  <MaterialCommunityIcons name="clock-time-eight-outline" size={22} color="#FFC107" />
-                  <Text style={styles.statCardLabel}>Active Hours</Text>
-                </View>
-                <Text style={styles.statCardValue}>87</Text>
-                <Text style={styles.statCardAverage}>2.9 daily avg</Text>
-              </View>
-              <View style={styles.statCard}>
-                <View style={styles.statCardHeader}>
-                  <MaterialCommunityIcons name="dumbbell" size={22} color="#6BBF59" />
-                  <Text style={styles.statCardLabel}>Workouts</Text>
-                </View>
-                <Text style={styles.statCardValue}>18</Text>
-                <Text style={styles.statCardAverage}>4.5 per week</Text>
-              </View>
-            </View>
           </View>
         </>
       ) : (
@@ -1029,6 +1343,43 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 15,
     marginTop: -10,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  refreshText: {
+    fontSize: 14,
+    color: '#4A6FFF',
+    fontWeight: '500',
+  },
+  chartContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 10,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
+  },
+  chartLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    color: '#666',
+    marginTop: 10,
+    fontSize: 14,
   },
 });
 

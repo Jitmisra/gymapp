@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import healthTracker from '../utils/HealthTracker';
 
 // Create the auth context
@@ -45,13 +46,23 @@ export const AuthProvider = ({ children }) => {
         if (storedWaterReminder) setWaterReminder(JSON.parse(storedWaterReminder));
         
         // Load health app connections
-        const appConnections = healthTracker.getConnectedApps();
-        setConnectedHealthApps(appConnections);
-        
-        // Load initial health data if any app is connected
-        if (appConnections.googleFit || appConnections.appleHealth || appConnections.samsungHealth) {
-          const data = await healthTracker.getAllHealthData();
-          setHealthData(data);
+        try {
+          const appConnections = healthTracker.getConnectedApps();
+          setConnectedHealthApps(appConnections);
+          
+          // Load initial health data if any app is connected
+          if (appConnections.googleFit || appConnections.appleHealth || appConnections.samsungHealth) {
+            try {
+              const data = await healthTracker.getAllHealthData();
+              setHealthData(data);
+            } catch (healthError) {
+              console.error("Error loading health data:", healthError);
+              // Continue even if health data loading fails
+            }
+          }
+        } catch (healthAppError) {
+          console.error("Error loading health app connections:", healthAppError);
+          // Continue even if loading health app connections fails
         }
       } catch (e) {
         console.error("Error loading data from storage:", e);
@@ -87,21 +98,54 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
-  // Connect to a health app
+  // Connect to a health app with improved error handling
   const connectHealthApp = async (appName) => {
     try {
-      const success = await healthTracker.connectToHealthApp(appName);
+      console.log(`AuthContext: Connecting to ${appName}...`);
+      
+      // Special handling for Google Fit on Android
+      if (appName === 'googleFit' && Platform.OS === 'android') {
+        console.log('Connecting to Google Fit on Android');
+        // Add any special Google Fit initialization here
+      }
+      
+      // Handle potential callback errors
+      let success = false;
+      try {
+        success = await healthTracker.connectToHealthApp(appName);
+      } catch (connectionError) {
+        console.error(`Error during direct connection to ${appName}:`, connectionError);
+        // Try alternative connection method if available
+        if (appName === 'googleFit' && Platform.OS === 'android') {
+          try {
+            console.log('Attempting alternative Google Fit connection...');
+            // Insert alternative connection logic here if needed
+            success = false; // Set appropriately based on alternative method
+          } catch (altError) {
+            console.error('Alternative connection also failed:', altError);
+            success = false;
+          }
+        }
+      }
+      
+      console.log(`AuthContext: Connection to ${appName} ${success ? 'successful' : 'failed'}`);
+      
       if (success) {
         const appConnections = healthTracker.getConnectedApps();
         setConnectedHealthApps({...appConnections});
         
         // Fetch initial data after connecting
-        const data = await healthTracker.getAllHealthData();
-        setHealthData(data);
+        try {
+          const data = await healthTracker.getAllHealthData();
+          setHealthData(data);
+        } catch (dataError) {
+          console.error('Error fetching initial health data:', dataError);
+          // Continue even if data fetch fails
+        }
       }
       return success;
     } catch (error) {
-      console.error(`Error connecting to ${appName}:`, error);
+      console.error(`AuthContext: Error connecting to ${appName}:`, error);
       return false;
     }
   };

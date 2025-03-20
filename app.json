@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "fittler",
+    "name": "Fittler",
     "slug": "fittler",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/gym.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/assets/gym.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,35 +16,31 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "infoPlist": {
-        "NSHealthShareUsageDescription": "This app requires access to your health data to track your fitness progress and display step counts.",
-        "NSHealthUpdateUsageDescription": "This app requires permission to update your health data for accurate fitness tracking."
-      },
-      "bundleIdentifier": "com.jitttt.tempoapp"
+      "bundleIdentifier": "com.yourcompany.fittler"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/gym.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
         "android.permission.ACTIVITY_RECOGNITION",
         "android.permission.ACCESS_FINE_LOCATION",
-        "com.google.android.gms.permission.ACTIVITY_RECOGNITION",
-        "android.permission.ACTIVITY_RECOGNITION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "com.google.android.gms.permission.ACTIVITY_RECOGNITION"
+        "android.permission.ACCESS_COARSE_LOCATION"
       ],
-      "package": "com.jitttt.tempoapp"
+      "package": "com.yourcompany.fittler"
     },
     "web": {
-      "favicon": "./src/assets/gym.png"
+      "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      "expo-updates"
+    ],
     "newArchEnabled": true,
     "owner": "jitttt",
     "extra": {
       "eas": {
-        "projectId": "673a22db-d7ea-4b3f-97ec-42b5f1a1c4b0"
+        "projectId": "8d2e214f-ed9c-45bc-8c07-f6f9b5541d30"
       }
     },
     "runtimeVersion": "1.0.0"

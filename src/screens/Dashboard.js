@@ -23,12 +23,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const ActivityTile = ({ title, value, unit, icon, color }) => {
   return (
-    <TouchableOpacity style={[styles.tile, { backgroundColor: color }]}>
-      <View style={styles.tileContent}>
+    <TouchableOpacity style={{ backgroundColor: color, padding: 16, borderRadius: 8 }}>
+      <View style={{ alignItems: 'center' }}>
         <MaterialCommunityIcons name={icon} size={28} color="#fff" />
-        <Text style={styles.tileTitle}>{title}</Text>
-        <Text style={styles.tileValue}>{value}</Text>
-        <Text style={styles.tileUnit}>{unit}</Text>
+        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff' }}>{title}</Text>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#fff' }}>{value}</Text>
+        <Text style={{ fontSize: 14, color: '#fff' }}>{unit}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -159,11 +159,11 @@ const Dashboard = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* User Profile Header */}
-      <View style={styles.profileHeader}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginTop: 10, alignItems: 'center' }}>
         <View>
-          <Text style={styles.welcomeText}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold' }}>
             Hello, {userData ? userData.name.split(' ')[0] : 'there'}!
           </Text>
           <Text style={styles.dateText}>
@@ -181,11 +181,11 @@ const Dashboard = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Health Summary Card - Updated with real data */}
         <View style={styles.summaryContainer}>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryHeaderRow}>
-              <Text style={styles.summaryTitle}>Today's Progress</Text>
+          <View style={{ marginHorizontal: 16, padding: 16, backgroundColor: '#f7f7f7', borderRadius: 10 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontWeight: '600' }}>Today's Progress</Text>
               <TouchableOpacity 
-                style={styles.syncButton}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 8, borderRadius: 5 }}
                 onPress={handleSyncHealthData}
                 disabled={isSyncingHealth}
               >
@@ -221,10 +221,10 @@ const Dashboard = ({ navigation }) => {
                   
                   <View style={styles.metricItem}>
                     <View style={[styles.metricIconBg, {backgroundColor: '#6BBF5920'}]}>
-                      <MaterialCommunityIcons name="weight-lifter" size={18} color="#6BBF59" />
+                      <MaterialCommunityIcons name="map-marker-path" size={18} color="#6BBF59" />
                     </View>
-                    <Text style={styles.metricValue}>{Math.round(healthData.activeMinutes / 10) || 0}</Text>
-                    <Text style={styles.metricLabel}>Workouts</Text>
+                    <Text style={styles.metricValue}>{((healthData.distance || 0) / 1609).toFixed(1)}</Text>
+                    <Text style={styles.metricLabel}>Miles</Text>
                   </View>
                 </View>
                 {healthData.lastSync && (
@@ -253,7 +253,7 @@ const Dashboard = ({ navigation }) => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Today's Workout</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('WorkoutHistory')}>
+            <TouchableOpacity onPress={() => navigation.navigate('WorkoutScreens', { screen: 'WorkoutHistory' })}>
               <Text style={styles.sectionLink}>History</Text>
             </TouchableOpacity>
           </View>
@@ -460,7 +460,7 @@ const Dashboard = ({ navigation }) => {
             
             <View style={styles.gymStatusDetails}>
               <View style={styles.equipmentItem}>
-                <MaterialCommunityIcons name="treadmill" size={18} color="#666" />
+                <MaterialCommunityIcons name="walk" size={18} color="#666" />
                 <Text style={styles.equipmentText}>Treadmills: 8/10 available</Text>
               </View>
               <View style={styles.equipmentItem}>
@@ -484,18 +484,15 @@ const Dashboard = ({ navigation }) => {
 
       {/* FIXED Floating AI Assistant Button */}
       <Animated.View
-        style={[
-          styles.floatingAiButton,
-          {
-            transform: [
-              { scale: aiButtonScale },
-              { rotate: spin }
-            ],
-          },
-        ]}
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          transform: [{ scale: aiButtonScale }, { rotate: spin }]
+        }}
       >
         <TouchableOpacity 
-          style={styles.floatingAiButtonTouchable}
+          style={{ borderRadius: 30, overflow: 'hidden' }}
           activeOpacity={0.8}
           onPress={() => {
             animateAiButton();
@@ -504,7 +501,7 @@ const Dashboard = ({ navigation }) => {
         >
           <LinearGradient
             colors={['#4A6FFF', '#6B66FF']}
-            style={styles.floatingAiButtonInner}
+            style={{ padding: 14, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}
           >
             <MaterialCommunityIcons name="robot" size={28} color="#fff" />
           </LinearGradient>

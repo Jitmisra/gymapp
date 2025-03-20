@@ -1,14 +1,36 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Add fallback scopes similar to the GoogleFitManager
+const FALLBACK_SCOPES = {
+  FITNESS_ACTIVITY_READ: 'https://www.googleapis.com/auth/fitness.activity.read',
+  FITNESS_ACTIVITY_WRITE: 'https://www.googleapis.com/auth/fitness.activity.write',
+  FITNESS_BODY_READ: 'https://www.googleapis.com/auth/fitness.body.read',
+  FITNESS_BODY_WRITE: 'https://www.googleapis.com/auth/fitness.body.write'
+};
+
 // Import health libraries conditionally to prevent errors
 let AppleHealthKit;
 let GoogleFit;
 
-if (Platform.OS === 'ios') {
-  AppleHealthKit = require('react-native-health').default;
-} else if (Platform.OS === 'android') {
-  GoogleFit = require('react-native-google-fit').default;
+// Attempt to load libraries safely
+try {
+  if (Platform.OS === 'ios') {
+    AppleHealthKit = require('react-native-health').default;
+  } else if (Platform.OS === 'android') {
+    // On Android, use a safer import approach
+    const GoogleFitLib = require('react-native-google-fit');
+    GoogleFit = GoogleFitLib.default || GoogleFitLib;
+    
+    // Add fallback scopes if needed
+    if (GoogleFit && !GoogleFit.Scopes) {
+      GoogleFit.Scopes = FALLBACK_SCOPES;
+    }
+    
+    console.log('GoogleFit library loaded:', GoogleFit ? 'SUCCESS' : 'FAILED', 'Scopes available:', !!GoogleFit?.Scopes);
+  }
+} catch (error) {
+  console.error('Error loading health libraries:', error);
 }
 
 // Define health permissions for iOS
@@ -112,30 +134,53 @@ class HealthTracker {
     // Initialize Google Fit on Android
     if (Platform.OS === 'android' && this.connectedApps.googleFit) {
       try {
+        console.log('Initializing Google Fit...');
+        
+        // Check if GoogleFit is properly imported
+        if (!GoogleFit) {
+          console.error('GoogleFit module not available during initialization');
+          return false;
+        }
+        
+        // Define scopes for Google Fit - use only essential ones to reduce permission requirements
         const options = {
           scopes: [
             GoogleFit.Scopes.FITNESS_ACTIVITY_READ,
-            GoogleFit.Scopes.FITNESS_ACTIVITY_WRITE,
-            GoogleFit.Scopes.FITNESS_BODY_READ,
-            GoogleFit.Scopes.FITNESS_BODY_WRITE,
-            GoogleFit.Scopes.FITNESS_LOCATION_READ,
-          ],
+            GoogleFit.Scopes.FITNESS_BODY_READ
+          ]
         };
         
+        console.log('Requesting Google Fit authorization with scopes:', options.scopes);
+        
+        // Authorize with Google Fit
         const authResult = await GoogleFit.authorize(options);
-        if (authResult.success) {
+        console.log('Google Fit auth result:', authResult);
+        
+        if (authResult && authResult.success) {
           console.log('Google Fit authorization successful');
-          await GoogleFit.startRecording((callback) => {
-            console.log('Google Fit recording started');
-          });
-          this.isInitialized = true;
-          return true;
+          
+          // Start recording fitness data - just basic metrics
+          try {
+            // Use simple recording setup to minimize potential issues
+            await GoogleFit.startRecording({
+              dataTypes: ['step', 'calories']
+            });
+            console.log('Google Fit recording started successfully');
+            this.isInitialized = true;
+            return true;
+          } catch (recordError) {
+            console.error('Failed to start Google Fit recording:', recordError);
+            return false;
+          }
         } else {
-          console.log('Google Fit authorization denied', authResult);
+          console.log('Google Fit authorization denied:', authResult);
           return false;
         }
       } catch (error) {
         console.error('Failed to initialize Google Fit:', error);
+        if (error.message) {
+          console.error('Error message:', error.message);
+        }
         return false;
       }
     }
@@ -151,8 +196,42 @@ class HealthTracker {
 
   // Connect to a health app
   async connectToHealthApp(appName) {
+    console.log(`Attempting to connect to ${appName}...`);
+    
     // Don't reconnect if already connected
-    if (this.connectedApps[appName]) return true;
+    if (this.connectedApps[appName]) {
+      console.log(`${appName} is already connected`);
+      return true;
+    }
+    
+    // For Google Fit on Android, check if the app is installed
+    if (appName === 'googleFit' && Platform.OS === 'android') {
+      try {
+        // Enhanced protection for GoogleFit module
+        if (!GoogleFit) {
+          console.error('GoogleFit module not available - attempting to load again');
+          try {
+            // Try to load again in case it failed the first time
+            const GoogleFitLib = require('react-native-google-fit');
+            GoogleFit = GoogleFitLib.default || GoogleFitLib;
+            if (!GoogleFit) {
+              throw new Error('Failed to load GoogleFit module');
+            }
+          } catch (loadError) {
+            console.error('GoogleFit module could not be loaded:', loadError);
+            return false;
+          }
+        }
+        
+        // Skip isAvailable check since it's causing issues
+        // Instead, we'll try to authorize and handle errors there
+        console.log('Skipping GoogleFit.isAvailable check due to reliability issues');
+        
+      } catch (error) {
+        console.error('Error with Google Fit initialization:', error);
+        return false;
+      }
+    }
     
     // Set as connected before initialization to enable the right flow
     this.connectedApps[appName] = true;
@@ -162,12 +241,14 @@ class HealthTracker {
     
     // If initialization failed, reset the connection state
     if (!success) {
+      console.log(`Failed to initialize ${appName}`);
       this.connectedApps[appName] = false;
       await this.saveConnectedApps();
       return false;
     }
     
     // Save connection state
+    console.log(`Successfully connected to ${appName}`);
     await this.saveConnectedApps();
     return true;
   }
@@ -318,4 +399,5 @@ class HealthTracker {
 
 // Create a singleton instance
 const healthTracker = new HealthTracker();
+healthTracker.needsLocationData = false; // Set this to true only if you need location data
 export default healthTracker;

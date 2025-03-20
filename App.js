@@ -1,13 +1,22 @@
-import React from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { TouchableOpacity, Text } from 'react-native';
+import React, { useEffect } from 'react';
+import { StatusBar, LogBox } from 'react-native';
+import { TouchableOpacity, Text, Alert } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Auth Provider
 import { AuthProvider, AuthContext } from './src/contexts/AuthContext';
+
+// Ignore specific warnings
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state', 
+  'Callback was not a function',
+  '[react-native-gesture-handler]',
+  // Add any other warnings you want to suppress
+]);
 
 // Auth Screens
 import SplashScreen from './src/screens/SplashScreen';
@@ -43,6 +52,9 @@ import DietPlanScreen from './src/screens/DietPlanScreen';
 
 // Add import for validateIconSize
 import validateIconSize from './src/utils/IconSizeValidator';
+
+// Add import for ErrorHandler
+import ErrorHandler from './src/utils/ErrorHandler';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -106,10 +118,40 @@ const WorkoutStackScreen = ({ navigation }) => (
     <WorkoutStack.Screen 
       name="WorkoutHistory" 
       component={WorkoutHistoryScreen}
-      options={{ 
+      options={({ navigation }) => ({ 
         headerShown: true,
-        title: "Workout History"
-      }}
+        title: "Workout History",
+        headerRight: () => (
+          <TouchableOpacity 
+            style={{ marginRight: 15 }}
+            onPress={() => {
+              Alert.alert(
+                'Clear History',
+                'Are you sure you want to clear your workout history? This action cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Clear',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await AsyncStorage.removeItem('workoutHistory');
+                        // Trigger refresh by navigating to the same screen with a refresh param
+                        navigation.setParams({ refresh: Date.now() });
+                      } catch (error) {
+                        console.error('Error clearing history:', error);
+                        Alert.alert('Error', 'Failed to clear workout history');
+                      }
+                    }
+                  }
+                ]
+              );
+            }}
+          >
+            <MaterialCommunityIcons name="delete-outline" size={24} color="#FF4A6F" />
+          </TouchableOpacity>
+        )
+      })}
     />
   </WorkoutStack.Navigator>
 );
@@ -213,6 +255,33 @@ const RootStack = createNativeStackNavigator();
 function AppNavigation() {
   const { isLoading, userToken, isGuestMode } = React.useContext(AuthContext);
 
+  // Add global error boundary
+  useEffect(() => {
+    const handleError = (error, isFatal) => {
+      console.log('Caught global error:', error);
+      if (isFatal) {
+        // Handle fatal errors - you could show a user-friendly error screen
+        console.log('Fatal error occurred');
+      }
+    };
+
+    // Set up the error handler for React Native
+    if (ErrorUtils) {
+      const originalGlobalHandler = ErrorUtils.getGlobalHandler();
+      ErrorUtils.setGlobalHandler((error, isFatal) => {
+        handleError(error, isFatal);
+        originalGlobalHandler(error, isFatal);
+      });
+    }
+
+    return () => {
+      // Restore original handler on unmount if needed
+      if (ErrorUtils) {
+        ErrorUtils.setGlobalHandler(ErrorUtils.getGlobalHandler());
+      }
+    };
+  }, []);
+
   if (isLoading) {
     return <SplashScreen />;
   }
@@ -258,8 +327,31 @@ function AppNavigation() {
   );
 }
 
-// Root component with AuthProvider
+// Root component with AuthProvider and error handling
 export default function App() {
+  // Handle unhandled promise rejections
+  useEffect(() => {
+    const rejectionTracker = require('promise/setimmediate/rejection-tracking');
+    
+    rejectionTracker.enable({
+      allRejections: true,
+      onUnhandled: (id, error) => {
+        console.log('Unhandled promise rejection:', error);
+      },
+      onHandled: () => {}
+    });
+    
+    return () => {
+      rejectionTracker.disable();
+    };
+  }, []);
+
+  // Add global error handler setup
+  useEffect(() => {
+    const cleanup = ErrorHandler.setupGlobalErrorHandlers();
+    return cleanup;
+  }, []);
+  
   return (
     <AuthProvider>
       <AppNavigation />

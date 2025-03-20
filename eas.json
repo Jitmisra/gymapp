@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 15.0.15",
+    "version": ">= 5.2.0",
     "appVersionSource": "remote",
     "promptToConfigurePushNotifications": false
   },
@@ -8,9 +8,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "prebuildCommand": "echo 'Using existing native folders'",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
       },
       "ios": {
         "simulator": true
@@ -18,14 +18,26 @@
     },
     "preview": {
       "distribution": "internal",
-      "prebuildCommand": "echo 'Using existing native folders'"
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      }
     },
     "production": {
-      "autoIncrement": true,
-      "prebuildCommand": "echo 'Using existing native folders'"
+      "autoIncrement": true
     }
   },
   "submit": {
     "production": {}
+  },
+  "client": {
+    "ios": {
+      "url": "exp://u.expo.dev/update/[hash]"
+    },
+    "android": {
+      "url": "exp://u.expo.dev/update/[hash]"
+    }
   }
 }

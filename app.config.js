@@ -46,7 +46,15 @@ export default ({config}) => {
       android: {
         package: "com.yourcompany.fittler",
         versionCode: 1,
-        // Add other Android config
+        permissions: [
+          "android.permission.INTERNET",
+          "android.permission.ACTIVITY_RECOGNITION", // Make sure this is present
+          "android.permission.ACCESS_FINE_LOCATION",
+          "android.permission.ACCESS_COARSE_LOCATION",
+          "android.permission.BODY_SENSORS",
+          "com.google.android.gms.permission.ACTIVITY_RECOGNITION" // Both versions for compatibility
+        ],
+        googleServicesFile: "./google-services.json", // Make sure this file exists
       }
     };
   }

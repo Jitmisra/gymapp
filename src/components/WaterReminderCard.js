@@ -6,11 +6,13 @@ import {
   TouchableOpacity, 
   Modal,
   Animated,
-  Dimensions
+  Dimensions,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthContext } from '../contexts/AuthContext';
+import NotificationManager from '../utils/NotificationManager';
 
 const DAILY_GOAL = 2000; // 2000ml or 2L
 const GLASS_SIZE = 250; // 250ml per glass
@@ -21,6 +23,7 @@ const WaterReminderCard = () => {
   const [showModal, setShowModal] = useState(false);
   const [lastDrink, setLastDrink] = useState(null);
   const [fillAnimation] = useState(new Animated.Value(0));
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   
   // Load water intake data from AsyncStorage
   useEffect(() => {
@@ -53,6 +56,27 @@ const WaterReminderCard = () => {
     
     loadWaterIntake();
   }, []);
+  
+  // Manage notifications based on waterReminder preference
+  useEffect(() => {
+    const manageNotifications = async () => {
+      if (waterReminder) {
+        // Try to schedule notifications
+        const success = await NotificationManager.scheduleWaterReminders();
+        setNotificationsEnabled(success);
+        
+        if (!success) {
+          console.log('Could not enable water reminder notifications');
+        }
+      } else {
+        // Cancel notifications
+        await NotificationManager.cancelWaterReminders();
+        setNotificationsEnabled(false);
+      }
+    };
+    
+    manageNotifications();
+  }, [waterReminder]);
   
   const resetWaterIntake = async () => {
     try {
@@ -133,6 +157,37 @@ const WaterReminderCard = () => {
     return `${hours}:${minutes < 10 ? '0' + minutes : minutes}`;
   };
   
+  const toggleNotifications = async () => {
+    if (notificationsEnabled) {
+      // If notifications are on, turn them off
+      await NotificationManager.cancelWaterReminders();
+      setNotificationsEnabled(false);
+      Alert.alert('Notifications Disabled', 'Water reminder notifications have been turned off.');
+    } else {
+      // If notifications are off, try to turn them on
+      const permissionGranted = await NotificationManager.requestNotificationPermissions();
+      
+      if (permissionGranted) {
+        const success = await NotificationManager.scheduleWaterReminders();
+        setNotificationsEnabled(success);
+        
+        if (success) {
+          Alert.alert('Notifications Enabled', 'You will receive water reminders every 2 hours between 8am and 10pm.');
+        } else {
+          Alert.alert('Error', 'Could not enable notifications. Please check your device settings.');
+        }
+      } else {
+        Alert.alert(
+          'Permission Required',
+          'We need notification permission to remind you to drink water. Please enable notifications in your device settings.',
+          [
+            { text: 'OK' }
+          ]
+        );
+      }
+    }
+  };
+  
   const progressPercentage = (waterIntake / DAILY_GOAL) * 100;
   
   // If water reminders are disabled, don't show the card
@@ -154,7 +209,12 @@ const WaterReminderCard = () => {
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Water Intake</Text>
           </View>
-          <TouchableOpacity onPress={() => setShowModal(true)}>
+          <TouchableOpacity onPress={toggleNotifications}>
+            <Ionicons 
+              name={notificationsEnabled ? "notifications" : "notifications-off"} 
+              size={22} 
+              color={notificationsEnabled ? "#4A6FFF" : "#ccc"} 
+            />
           </TouchableOpacity>
         </View>
         

@@ -41,14 +41,6 @@ const posts = [
   },
 ];
 
-const leaderboard = [
-  { id: '1', name: 'Alex Martin', points: 1250, avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-  { id: '2', name: 'Emma Wilson', points: 1120, avatar: 'https://randomuser.me/api/portraits/women/19.jpg' },
-  { id: '3', name: 'Sarah Parker', points: 980, avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { id: '4', name: 'Mike Johnson', points: 945, avatar: 'https://randomuser.me/api/portraits/men/86.jpg' },
-  { id: '5', name: 'David Thompson', points: 890, avatar: 'https://randomuser.me/api/portraits/men/54.jpg' },
-];
-
 const Community = ({ navigation, route }) => {
   // Check for initialTab parameter to set the active tab when navigating from Dashboard
   const initialTabParam = route.params?.initialTab;
@@ -103,18 +95,6 @@ const Community = ({ navigation, route }) => {
     </View>
   );
 
-  const renderLeaderboardItem = ({ item, index }) => (
-    <View style={styles.leaderboardItem}>
-      <Text style={styles.rank}>#{index + 1}</Text>
-      <Image source={{ uri: item.avatar }} style={styles.leaderAvatar} />
-      <Text style={styles.leaderName}>{item.name}</Text>
-      <View style={styles.pointsContainer}>
-        <Text style={styles.points}>{item.points}</Text>
-        <Text style={styles.pointsLabel}>pts</Text>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <View style={styles.tabContainer}>
@@ -124,21 +104,9 @@ const Community = ({ navigation, route }) => {
         >
           <Text style={[styles.tabText, activeTab === 'Feed' && styles.activeTabText]}>Feed</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Leaderboard' && styles.activeTab]}
-          onPress={() => setActiveTab('Leaderboard')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Leaderboard' && styles.activeTabText]}>Leaderboard</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Messages' && styles.activeTab]}
-          onPress={() => setActiveTab('Messages')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Messages' && styles.activeTabText]}>Messages</Text>
-        </TouchableOpacity>
       </View>
 
-      {activeTab === 'Feed' ? (
+      {activeTab === 'Feed' && (
         <FlatList
           data={posts}
           renderItem={renderPost}
@@ -156,67 +124,6 @@ const Community = ({ navigation, route }) => {
             </View>
           }
         />
-      ) : activeTab === 'Leaderboard' ? (
-        <View style={styles.leaderboardContainer}>
-          <View style={styles.leaderboardHeader}>
-            <Text style={styles.leaderboardTitle}>Campus Fitness Rankings</Text>
-            <TouchableOpacity style={styles.filterButton}>
-              <Text style={styles.filterText}>This Month</Text>
-              <MaterialCommunityIcons name="chevron-down" size={20} color="#4A6FFF" />
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={leaderboard}
-            renderItem={renderLeaderboardItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.leaderboardList}
-          />
-        </View>
-      ) : (
-        <View style={styles.messagesContainer}>
-          <FlatList
-            data={[
-              { id: 'user123', name: 'Emma Wilson', avatar: 'https://randomuser.me/api/portraits/women/19.jpg', lastMessage: 'Hey! Are you going to the gym today?', time: '10:30 AM', unread: 2 },
-              { id: 'user456', name: 'Mike Johnson', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', lastMessage: 'Did you check out that new protein shake?', time: 'Yesterday', unread: 0 },
-              { id: 'user789', name: 'Sarah Parker', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', lastMessage: 'Just sent it to your email!', time: 'Monday', unread: 1 },
-              { id: 'user101', name: 'David Thompson', avatar: 'https://randomuser.me/api/portraits/men/54.jpg', lastMessage: 'Thanks for the workout tips!', time: 'June 1', unread: 0 },
-            ]}
-            renderItem={({ item }) => (
-              <TouchableOpacity 
-                style={styles.messageItem}
-                onPress={() => navigation.navigate('FriendChat', {
-                  friendId: item.id,
-                  friendName: item.name,
-                  friendAvatar: item.avatar
-                })}
-              >
-                <View style={styles.messageAvatar}>
-                  <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
-                </View>
-                <View style={styles.messageContent}>
-                  <View style={styles.messageHeader}>
-                    <Text style={styles.messageName}>{item.name}</Text>
-                    <Text style={styles.messageTime}>{item.time}</Text>
-                  </View>
-                  <View style={styles.messagePreview}>
-                    <Text 
-                      style={[styles.messageText, item.unread > 0 && styles.unreadMessageText]} 
-                      numberOfLines={1}
-                    >
-                      {item.lastMessage}
-                    </Text>
-                    {item.unread > 0 && (
-                      <View style={styles.chatUnreadBadge}>
-                        <Text style={styles.chatUnreadText}>{item.unread}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
-            keyExtractor={item => item.id}
-          />
-        </View>
       )}
     </View>
   );
@@ -336,138 +243,6 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: '#666',
     fontSize: 14,
-  },
-  leaderboardContainer: {
-    flex: 1,
-  },
-  leaderboardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-  },
-  leaderboardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  filterText: {
-    color: '#4A6FFF',
-    marginRight: 5,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  leaderboardList: {
-    backgroundColor: '#fff',
-    paddingVertical: 10,
-  },
-  leaderboardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  rank: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    width: 40,
-  },
-  leaderAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 15,
-  },
-  leaderName: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-  },
-  pointsContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  points: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4A6FFF',
-    marginRight: 3,
-  },
-  pointsLabel: {
-    fontSize: 12,
-    color: '#888',
-  },
-  messagesContainer: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  messageItem: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  messageAvatar: {
-    marginRight: 15,
-  },
-  chatAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  messageContent: {
-    flex: 1,
-  },
-  messageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  messageName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  messageTime: {
-    fontSize: 12,
-    color: '#999',
-  },
-  messagePreview: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  messageText: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-  },
-  unreadMessageText: {
-    fontWeight: '600',
-    color: '#333',
-  },
-  chatUnreadBadge: {
-    backgroundColor: '#4A6FFF',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  chatUnreadText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: 'bold',
   },
 });
 

@@ -785,46 +785,9 @@ const Profile = ({ navigation }) => {
             <Ionicons name="chevron-forward" size={22} color="#999" />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.logoutButton}>
-            <Text style={styles.logoutButtonText}>Log Out</Text>
-          </TouchableOpacity>
         </View>
       )}
 
-      {bmiData && (
-        <View style={styles.bmiContainer}>
-          <Text style={styles.sectionTitle}>Your Health Metrics</Text>
-          
-          <View style={styles.bmiCard}>
-            <View style={styles.bmiHeaderRow}>
-              <Text style={styles.bmiLabel}>BMI</Text>
-              <View style={[styles.bmiCategoryBadge, { backgroundColor: bmiCategory.color }]}>
-                <Text style={styles.bmiCategoryText}>{bmiCategory.category}</Text>
-              </View>
-            </View>
-            
-            <Text style={styles.bmiValue}>{bmiData.bmi}</Text>
-            
-            <View style={styles.bmiDetailsContainer}>
-              <View style={styles.bmiDetail}>
-                <Text style={styles.bmiDetailLabel}>Age</Text>
-                <Text style={styles.bmiDetailValue}>{bmiData.age} years</Text>
-              </View>
-              
-              <View style={styles.bmiDetail}>
-                <Text style={styles.bmiDetailLabel}>Weight</Text>
-                <Text style={styles.bmiDetailValue}>{bmiData.weight} kg</Text>
-              </View>
-              
-              <View style={styles.bmiDetail}>
-                <Text style={styles.bmiDetailLabel}>Height</Text>
-                <Text style={styles.bmiDetailValue}>{bmiData.height} cm</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-      
       <View style={styles.settingsContainer}>
         <Text style={styles.sectionTitle}>Settings</Text>
         

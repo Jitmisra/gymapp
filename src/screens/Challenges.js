@@ -1,49 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, FlatList, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, FlatList } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 
-const challenges = [
-  {
-    id: '1',
-    title: 'Push-up Challenge',
-    description: '100 push-ups per day for 7 days',
-    creator: { name: 'Mike Johnson', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    participants: 18,
-    duration: '7 days',
-    progress: 0.6,
-    joined: true,
-  },
-  {
-    id: '2',
-    title: '10K Steps Daily',
-    description: 'Complete 10,000 steps every day for a month',
-    creator: { name: 'Sarah Parker', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    participants: 34,
-    duration: '30 days',
-    progress: 0.3,
-    joined: true,
-  },
-  {
-    id: '3',
-    title: 'Weight Loss Challenge',
-    description: 'Lose 5% of your body weight in 2 months',
-    creator: { name: 'David Thompson', avatar: 'https://randomuser.me/api/portraits/men/54.jpg' },
-    participants: 25,
-    duration: '60 days',
-    progress: 0,
-    joined: false,
-  },
-  {
-    id: '4',
-    title: 'Morning Yoga',
-    description: 'Complete a 15-minute yoga session every morning',
-    creator: { name: 'Emma Wilson', avatar: 'https://randomuser.me/api/portraits/women/19.jpg' },
-    participants: 12,
-    duration: '21 days',
-    progress: 0,
-    joined: false,
-  },
-];
+// Removed challenges array
 
 const duels = [
   {
@@ -67,49 +26,10 @@ const duels = [
 ];
 
 const Challenges = () => {
-  const [activeTab, setActiveTab] = useState('Challenges');
-  const [showNewChallengeModal, setShowNewChallengeModal] = useState(false);
-
-  const renderChallengeItem = ({ item }) => (
-    <View style={styles.challengeCard}>
-      <View style={styles.challengeHeader}>
-        <Text style={styles.challengeTitle}>{item.title}</Text>
-        <TouchableOpacity 
-          style={[styles.joinButton, item.joined && styles.joinedButton]}
-        >
-          <Text style={[styles.joinButtonText, item.joined && styles.joinedButtonText]}>
-            {item.joined ? 'Joined' : 'Join'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.challengeDescription}>{item.description}</Text>
-      
-      <View style={styles.creatorInfo}>
-        <Image source={{ uri: item.creator.avatar }} style={styles.creatorAvatar} />
-        <Text style={styles.creatorText}>Created by <Text style={styles.creatorName}>{item.creator.name}</Text></Text>
-      </View>
-      
-      <View style={styles.challengeStats}>
-        <View style={styles.statItem}>
-          <Ionicons name="people" size={16} color="#666" />
-          <Text style={styles.statValue}>{item.participants} participants</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Ionicons name="time-outline" size={16} color="#666" />
-          <Text style={styles.statValue}>{item.duration}</Text>
-        </View>
-      </View>
-
-      {item.joined && (
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBarBackground}>
-            <View style={[styles.progressBar, { width: `${item.progress * 100}%` }]} />
-          </View>
-          <Text style={styles.progressText}>{Math.round(item.progress * 100)}% complete</Text>
-        </View>
-      )}
-    </View>
-  );
+  // Removed showNewChallengeModal state
+  // Removed activeTab state since we only have duels now
+  
+  // Removed renderChallengeItem function
 
   const renderDuelItem = ({ item }) => (
     <View style={styles.duelCard}>
@@ -177,51 +97,23 @@ const Challenges = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Challenges' && styles.activeTab]}
-          onPress={() => setActiveTab('Challenges')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Challenges' && styles.activeTabText]}>Challenges</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'Duels' && styles.activeTab]}
-          onPress={() => setActiveTab('Duels')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Duels' && styles.activeTabText]}>Duels</Text>
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === 'Challenges' ? (
-        <FlatList
-          data={challenges}
-          renderItem={renderChallengeItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContainer}
-          ListHeaderComponent={
-            <TouchableOpacity 
-              style={styles.createButton}
-              onPress={() => setShowNewChallengeModal(true)}
-            >
-              <Ionicons name="add-circle" size={22} color="#fff" />
-              <Text style={styles.createButtonText}>Create New Challenge</Text>
-            </TouchableOpacity>
-          }
-        />
-      ) : (
-        <FlatList
-          data={duels}
-          renderItem={renderDuelItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContainer}
-          ListHeaderComponent={
+      {/* Removed tab container since we only show duels now */}
+      <FlatList
+        data={duels}
+        renderItem={renderDuelItem}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={
+          <View>
+            <Text style={styles.screenTitle}>Fitness Duels</Text>
+            <Text style={styles.screenSubtitle}>Challenge friends and track your progress</Text>
             <TouchableOpacity style={styles.createButton}>
               <Ionicons name="flash" size={22} color="#fff" />
               <Text style={styles.createButtonText}>Challenge a Friend</Text>
             </TouchableOpacity>
-          }
-        />
-      )}
+          </View>
+        }
+      />
     </View>
   );
 };
@@ -231,28 +123,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 5,
-    marginBottom: 10,
+  // Removed tabContainer, tab, activeTab, tabText, activeTabText styles
+  screenTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    paddingHorizontal: 15,
+    paddingTop: 15,
   },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 25,
-    marginHorizontal: 5,
-  },
-  activeTab: {
-    backgroundColor: '#4A6FFF',
-  },
-  tabText: {
-    fontWeight: '600',
+  screenSubtitle: {
+    fontSize: 16,
     color: '#666',
-  },
-  activeTabText: {
-    color: '#fff',
+    paddingHorizontal: 15,
+    paddingBottom: 15,
   },
   listContainer: {
     padding: 15,
@@ -272,104 +155,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
   },
-  challengeCard: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-  challengeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  challengeTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-  },
-  joinButton: {
-    backgroundColor: '#4A6FFF',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 15,
-  },
-  joinButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  joinedButton: {
-    backgroundColor: '#e0e0e0',
-  },
-  joinedButtonText: {
-    color: '#666',
-  },
-  challengeDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  creatorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  creatorAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  creatorText: {
-    fontSize: 13,
-    color: '#666',
-  },
-  creatorName: {
-    fontWeight: '600',
-    color: '#333',
-  },
-  challengeStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 13,
-    color: '#666',
-    marginLeft: 5,
-  },
-  progressContainer: {
-    marginTop: 5,
-  },
-  progressBarBackground: {
-    height: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#4CAF50',
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
-    textAlign: 'right',
-  },
+  // Removed challengeCard related styles
   duelCard: {
     backgroundColor: '#fff',
     borderRadius: 10,

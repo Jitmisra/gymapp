@@ -12,10 +12,12 @@
     "generate-keystore": "node ./scripts/generate-keystore.js",
     "simple-keystore": "node ./scripts/simple-keystore-gen.js",
     "fix-eas": "node ./scripts/fix-eas.js",
+    "fix-eas-updates": "node ./scripts/fix-eas-updates.js",
     "eas": "eas-cli",
     "eas:build": "eas build",
     "eas:credentials": "eas credentials",
-    "eas:update": "eas update"
+    "eas:update": "eas update",
+    "prepare-updates": "npm run fix-eas-updates && npm i -g eas-cli@latest && eas update:configure"
   },
   "dependencies": {
     "@expo/config-plugins": "~9.0.0",

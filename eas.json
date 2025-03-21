@@ -1,43 +1,18 @@
 {
   "cli": {
-    "version": ">= 5.2.0",
-    "appVersionSource": "remote",
-    "promptToConfigurePushNotifications": false
+    "version": ">= 3.0.0"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug"
-      },
-      "ios": {
-        "simulator": true
-      }
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "android": {
-        "buildType": "apk"
-      },
-      "ios": {
-        "simulator": false
-      }
+      "distribution": "internal"
     },
-    "production": {
-      "autoIncrement": true
-    }
+    "production": {}
   },
   "submit": {
     "production": {}
-  },
-  "client": {
-    "ios": {
-      "url": "exp://u.expo.dev/update/[hash]"
-    },
-    "android": {
-      "url": "exp://u.expo.dev/update/[hash]"
-    }
   }
 }

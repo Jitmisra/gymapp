@@ -10,3 +10,6 @@ then
 npm start
 then press i for iphone
 or press a for android
+
+click on siginup not as guest 
+then start backed srver
